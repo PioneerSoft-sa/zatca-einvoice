@@ -11,29 +11,29 @@ import fs from "fs";
 
 import defaultCSRConfig from "../templates/csr_template";
 import API from "../api";
-import { ZATCAInvoice } from "../ZATCASimplifiedTaxInvoice";
+import { ZATCAInvoice } from "../simplified_tax_invoice";
 
 export interface EGSUnitLocation {
-  city?: string;
-  city_subdivision?: string;
-  street?: string;
-  plot_identification?: string;
-  building?: string;
-  postal_zone?: string;
+    city?: string;
+    city_subdivision?: string;
+    street?: string;
+    plot_identification?: string;
+    building?: string;
+    postal_zone?: string;
 }
 
 export interface EGSUnitCustomerInfo {
-  city?: string;
-  city_subdivision?: string;
-  street?: string;
-  additional_street?: string;
-  plot_identification?: string;
-  building?: string;
-  postal_zone?: string;
-  country_sub_entity?: string;
-  buyer_name: string;
-  customer_crn_number?: string;
-  vat_number?: string;
+    city?: string;
+    city_subdivision?: string;
+    street?: string;
+    additional_street?: string;
+    plot_identification?: string;
+    building?: string;
+    postal_zone?: string;
+    country_sub_entity?: string;
+    buyer_name: string;
+    customer_crn_number?: string;
+    vat_number?: string;
 }
 
 export interface EGSUnitInfo {
@@ -61,7 +61,7 @@ const OpenSSL = (cmd: string[]): Promise<string> => {
             const command = spawn("openssl", cmd);
             let result = "";
             command.stdout.on("data", (data) => {
-                 result += data.toString();
+                result += data.toString();
             });
             command.on("close", (code: number) => {
                 return resolve(result);
@@ -113,13 +113,13 @@ const generateCSR = async (egs_info: EGSUnitInfo, production: boolean, solution_
         taxpayer_provided_id: egs_info.custom_id,
         production: production
     }));
-    
+
     const cleanUp = () => {
-        fs.unlink(private_key_file, ()=>{});
-        fs.unlink(csr_config_file, ()=>{});
+        fs.unlink(private_key_file, () => { });
+        fs.unlink(csr_config_file, () => { });
     };
-    
-    try {    
+
+    try {
         const result = await OpenSSL(["req", "-new", "-sha256", "-key", private_key_file, "-config", csr_config_file]);
         if (!result.includes("-----BEGIN CERTIFICATE REQUEST-----")) throw new Error("Error no CSR found in OpenSSL output.");
 
@@ -158,7 +158,7 @@ export class EGS {
      * @param egs_info Partial<EGSUnitInfo>
      */
     set(egs_info: Partial<EGSUnitInfo>) {
-        this.egs_info = {...this.egs_info, ...egs_info};
+        this.egs_info = { ...this.egs_info, ...egs_info };
     }
 
     /**
@@ -174,7 +174,7 @@ export class EGS {
             const new_private_key = await generateSecp256k1KeyPair();
             this.egs_info.private_key = new_private_key;
 
-            const new_csr = await generateCSR(this.egs_info, production, solution_name);    
+            const new_csr = await generateCSR(this.egs_info, production, solution_name);
             this.egs_info.csr = new_csr;
         } catch (error) {
             throw error;
@@ -202,13 +202,13 @@ export class EGS {
      * @param compliance_request_id String compliance request ID generated from compliance CSID request.
      * @returns Promise String request id on success, throws error on fail.
      */
-     async issueProductionCertificate(compliance_request_id: string): Promise<string> {
-        if(!this.egs_info.compliance_certificate || !this.egs_info.compliance_api_secret) throw new Error("EGS is missing a certificate/private key/api secret to request a production certificate.")
+    async issueProductionCertificate(compliance_request_id: string): Promise<string> {
+        if (!this.egs_info.compliance_certificate || !this.egs_info.compliance_api_secret) throw new Error("EGS is missing a certificate/private key/api secret to request a production certificate.")
 
         const issued_data = await this.api.production(this.egs_info.compliance_certificate, this.egs_info.compliance_api_secret).issueCertificate(compliance_request_id);
         this.egs_info.production_certificate = issued_data.issued_certificate;
         this.egs_info.production_api_secret = issued_data.api_secret;
-        
+
         return issued_data.request_id;
     }
 
@@ -218,8 +218,8 @@ export class EGS {
      * @param invoice_hash String.
      * @returns Promise compliance data on success, throws error on fail.
      */
-     async checkInvoiceCompliance(signed_invoice_string: string, invoice_hash: string): Promise<any> {
-        if(!this.egs_info.compliance_certificate || !this.egs_info.compliance_api_secret) throw new Error("EGS is missing a certificate/private key/api secret to check the invoice compliance.")
+    async checkInvoiceCompliance(signed_invoice_string: string, invoice_hash: string): Promise<any> {
+        if (!this.egs_info.compliance_certificate || !this.egs_info.compliance_api_secret) throw new Error("EGS is missing a certificate/private key/api secret to check the invoice compliance.")
 
         return await this.api.compliance(this.egs_info.compliance_certificate, this.egs_info.compliance_api_secret).checkInvoiceCompliance(
             signed_invoice_string,
@@ -236,7 +236,7 @@ export class EGS {
      * @returns Promise reporting data on success, throws error on fail.
      */
     async reportInvoice(signed_invoice_string: string, invoice_hash: string): Promise<any> {
-        if(!this.egs_info.production_certificate || !this.egs_info.production_api_secret) throw new Error("EGS is missing a certificate/private key/api secret to report the invoice.")
+        if (!this.egs_info.production_certificate || !this.egs_info.production_api_secret) throw new Error("EGS is missing a certificate/private key/api secret to report the invoice.")
 
         return await this.api.production(this.egs_info.production_certificate, this.egs_info.production_api_secret).reportInvoice(
             signed_invoice_string,
@@ -252,7 +252,7 @@ export class EGS {
      * @returns Promise reporting data on success, throws error on fail.
      */
     async clearanceInvoice(signed_invoice_string: string, invoice_hash: string): Promise<any> {
-        if(!this.egs_info.production_certificate || !this.egs_info.production_api_secret) throw new Error("EGS is missing a certificate/private key/api secret to report the invoice.")
+        if (!this.egs_info.production_certificate || !this.egs_info.production_api_secret) throw new Error("EGS is missing a certificate/private key/api secret to report the invoice.")
 
         return await this.api.production(this.egs_info.production_certificate, this.egs_info.production_api_secret).clearanceInvoice(
             signed_invoice_string,
@@ -267,7 +267,7 @@ export class EGS {
      * @param production Boolean production or compliance certificate.
      * @returns Promise void on success (signed_invoice_string: string, invoice_hash: string, qr: string), throws error on fail.
      */
-    signInvoice(invoice: ZATCAInvoice, production?: boolean): {signed_invoice_string: string, invoice_hash: string, qr: string} {
+    signInvoice(invoice: ZATCAInvoice, production?: boolean): { signed_invoice_string: string, invoice_hash: string, qr: string } {
         const certificate = production ? this.egs_info.production_certificate : this.egs_info.compliance_certificate;
         if (!certificate || !this.egs_info.private_key) throw new Error("EGS is missing a certificate/private key to sign the invoice.");
 

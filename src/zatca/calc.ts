@@ -1,7 +1,7 @@
 import {
   ZATCAInvoiceLineItem,
   ZATCAInvoiceProps,
-} from "./ZATCASimplifiedTaxInvoice";
+} from "./simplified_tax_invoice";
 import { XMLDocument } from "../parser";
 import Decimal from "decimal.js";
 
@@ -265,7 +265,7 @@ const constructTaxTotal = (
       roundingNumber(
         acceptWarning,
         (line_item.tax_exclusive_price - total_line_item_discount) *
-          line_item.quantity
+        line_item.quantity
       )
     );
 

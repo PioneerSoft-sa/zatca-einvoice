@@ -3,40 +3,56 @@ import {
   ZATCAInvoiceLineItem,
   ZATCAInvoiceTypes,
 } from "../zatca/templates/simplified_tax_invoice_template";
-import { ZATCAInvoice } from "../zatca/ZATCASimplifiedTaxInvoice";
+import { ZATCAInvoice } from "../zatca/simplified_tax_invoice";
 
 
-// Sample line items
-const line_item_1: ZATCAInvoiceLineItem = {
-  id: "1",
-  name: "TEST NAME",
-  quantity: 44,
-  tax_exclusive_price: 22,
-  VAT_percent: 0.15,
-  discounts: [{ amount: 1, reason: "discount" }],
-};
+/**
+ * 
+ * Sample Invoice Line Items
+ *
+ */
 
-const line_item_2: ZATCAInvoiceLineItem = {
-  id: "2",
-  name: "TEST NAME 1",
-  quantity: 10,
-  tax_exclusive_price: 5,
-  VAT_percent: 0.05,
-  discounts: [{ amount: 2, reason: "discount" }],
-};
-
-const line_item_3: ZATCAInvoiceLineItem = {
-  id: "3",
-  name: "TEST NAME 2",
-  quantity: 10,
-  tax_exclusive_price: 5,
-  VAT_percent: 0.0,
-  vat_category: {
-    code: "Z",
-    reason_code: "VATEX-SA-34-4",
-    reason: "Supply of a qualifying means of transport",
+const lineItems: ZATCAInvoiceLineItem[] = [
+  {
+    id: "1",
+    name: "TEST NAME",
+    quantity: 44,
+    tax_exclusive_price: 22,
+    VAT_percent: 0.15,
+    discounts: [
+      {
+        amount: 1,
+        reason: "discount",
+      },
+    ],
   },
-};
+  {
+    id: "2",
+    name: "TEST NAME 1",
+    quantity: 10,
+    tax_exclusive_price: 5,
+    VAT_percent: 0.05,
+    discounts: [
+      {
+        amount: 2,
+        reason: "discount",
+      },
+    ],
+  },
+  {
+    id: "3",
+    name: "TEST NAME 2",
+    quantity: 10,
+    tax_exclusive_price: 5,
+    VAT_percent: 0,
+    vat_category: {
+      code: "Z",
+      reason_code: "VATEX-SA-34-4",
+      reason: "Supply of a qualifying means of transport",
+    },
+  },
+];
+
 
 // Sample EGSUnit
 const egsunit: EGSUnitInfo = {
@@ -78,7 +94,7 @@ const invoice = new ZATCAInvoice({
     issue_date: "2024-02-29",
     issue_time: "11:40:40",
     previous_invoice_hash: "zDnQnE05P6rFMqF1ai21V5hIRlUq/EXvrpsaoPkWRVI=",
-    line_items: [line_item_1, line_item_2, line_item_3],
+    line_items: lineItems,
     actual_delivery_date: "2024-02-29",
   },
   acceptWarning: true,
@@ -117,11 +133,16 @@ const main = async () => {
     // Issue production certificate
     // Report invoice production
     // Note: This request currently fails because ZATCA sandbox returns a constant fake production certificate
-    let response = await egs.reportInvoice(signed_invoice_string, invoice_hash);
-    console.log(JSON.stringify(response));
+    const reportResponse = await egs.reportInvoice(signed_invoice_string, invoice_hash);
+    console.log(
+      "Invoice Report Response:",
+      JSON.stringify(reportResponse, null, 2)
+    );
+
   } catch (error: any) {
-    console.log(error.message ?? error);
-    console.log(JSON.stringify(error.response?.data));
+    console.error("ZATCA Error:");
+    console.log(error?.message ?? error);
+    console.log(JSON.stringify(error?.response?.data));
   }
 };
 
