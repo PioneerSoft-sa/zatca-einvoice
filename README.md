@@ -47,7 +47,7 @@ All tha main futures required to on-board a new EGS. Create, sign, and report a 
 
 # Installation
 ```
-npm install zatca-xml-js
+npm install zatca-xml-ts
 ```
 
 # Usage
@@ -104,7 +104,7 @@ await egs.reportInvoice(signed_invoice_string, invoice_hash);
     - NIST SP 56A
 
 # Notice of Non-Affiliation and Disclaimer
-`zatca-xml-js` is not affiliated, associated, authorized, endorsed by, or in any way officially connected with ZATCA (Zakat, Tax and Customs Authority), or any of its subsidiaries or its affiliates. The official ZATCA website can be found at https://zatca.gov.sa.
+`zatca-xml-ts` is not affiliated, associated, authorized, endorsed by, or in any way officially connected with ZATCA (Zakat, Tax and Customs Authority), or any of its subsidiaries or its affiliates. The official ZATCA website can be found at https://zatca.gov.sa.
 
 # Contribution
 All contributions are appreciated.
