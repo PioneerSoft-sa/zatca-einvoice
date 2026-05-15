@@ -1,7 +1,6 @@
 {
   "name": "@pioneersoft/zatca-einvoice",
   "version": "0.1.6",
-  "_comment": "When cloned it becomes 0.1.5",
   "description": "An implementation of Saudi Arabia ZATCA's E-Invoicing requirements, processes, and standards.",
   "main": "dist/index.js",
   "files": [
