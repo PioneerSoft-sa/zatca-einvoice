@@ -131,8 +131,10 @@ export const cleanUpCertificateString = (certificate_string: string): string => 
 interface generateSignatureXMLParams {
     invoice_xml: XMLDocument,
     certificate_string: string,
-    private_key_string: string
+    private_key_string: string,
+    signing_timestamp?: string
 }
+
 /**
  * Main signing function.
  * @param invoice_xml XMLDocument of invoice to be signed.
@@ -140,8 +142,9 @@ interface generateSignatureXMLParams {
  * @param private_key_string String ec-secp256k1 private key;
  * @returns signed_invoice_string: string, invoice_hash: string, qr: string
  */
-export const generateSignedXMLString = ({invoice_xml, certificate_string, private_key_string}: generateSignatureXMLParams):
+export const generateSignedXMLString = ({invoice_xml, certificate_string, private_key_string, signing_timestamp}: generateSignatureXMLParams):
 {signed_invoice_string: string, invoice_hash: string, qr: string} => {
+
 
     const invoice_copy: XMLDocument = new XMLDocument(invoice_xml.toString({no_header: false}));
 
@@ -169,11 +172,12 @@ export const generateSignedXMLString = ({invoice_xml, certificate_string, privat
 
     // Set Signed properties
     const signed_properties_props = {
-        sign_timestamp: moment(new Date()).format("YYYY-MM-DDTHH:mm:ss")+"Z",
+        sign_timestamp: signing_timestamp ?? moment(new Date()).format("YYYY-MM-DDTHH:mm:ss")+"Z",
         certificate_hash: cert_info.hash,
         certificate_issuer: cert_info.issuer,
         certificate_serial_number: cert_info.serial_number
     };
+
     const ubl_signature_signed_properties_xml_string_for_signing = defaultUBLExtensionsSignedPropertiesForSigning(signed_properties_props);
     const ubl_signature_signed_properties_xml_string = defaultUBLExtensionsSignedProperties(signed_properties_props);
 

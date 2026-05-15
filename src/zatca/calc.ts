@@ -4,6 +4,8 @@ import {
 } from "./simplified_tax_invoice";
 import { XMLDocument } from "../parser";
 import Decimal from "decimal.js";
+import { ZATCA_CONSTANTS } from "./constants";
+
 
 interface CACTaxableAmount {
   tax_amount: number;
@@ -33,7 +35,8 @@ const constructLineItemTotals = (
   let cacTaxTotal = {};
 
   const VAT = {
-    "cbc:ID": line_item.VAT_percent ? "S" : line_item.vat_category?.code,
+    "cbc:ID": line_item.VAT_percent ? ZATCA_CONSTANTS.VAT_CATEGORY_STANDARD : line_item.vat_category?.code,
+
     "cbc:Percent": line_item.VAT_percent
       ? (line_item.VAT_percent * 100).toString()
       : 0.0,
@@ -49,13 +52,14 @@ const constructLineItemTotals = (
       "cbc:ChargeIndicator": "false",
       "cbc:AllowanceChargeReason": discount.reason,
       "cbc:Amount": {
-        "@_currencyID": "SAR",
+        "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
         "#text": new Decimal(discount.amount).toFixed(14),
       },
       "cbc:BaseAmount": {
-        "@_currencyID": "SAR",
+        "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
         "#text": line_item.tax_exclusive_price,
       },
+
     });
   });
 
@@ -72,15 +76,16 @@ const constructLineItemTotals = (
 
   cacTaxTotal = {
     "cbc:TaxAmount": {
-      "@_currencyID": "SAR",
+      "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
       "#text": new Decimal(line_item_total_taxes).toFixed(2),
     },
     "cbc:RoundingAmount": {
-      "@_currencyID": "SAR",
+      "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
       "#text": new Decimal(
         line_extension_amount + line_item_total_taxes
       ).toFixed(2),
     },
+
   };
 
   return {
@@ -114,9 +119,10 @@ const constructLineItem = (
         "#text": line_item.quantity,
       },
       "cbc:LineExtensionAmount": {
-        "@_currencyID": "SAR",
+        "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
         "#text": new Decimal(line_extension_amount).toFixed(2),
       },
+
       "cac:TaxTotal": cacTaxTotal,
       "cac:Item": {
         "cbc:Name": line_item.name,
@@ -124,11 +130,12 @@ const constructLineItem = (
       },
       "cac:Price": {
         "cbc:PriceAmount": {
-          "@_currencyID": "SAR",
+          "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
           "#text": new Decimal(line_item.tax_exclusive_price)
             .minus(new Decimal(line_discounts))
             .toFixed(14),
         },
+
         "cac:AllowanceCharge": cacAllowanceCharges,
       },
     },
@@ -193,16 +200,17 @@ const constructTaxTotal = (
     for (let key in zeroTaxTotals) {
       zeroTaxSubtotal.push({
         "cbc:TaxableAmount": {
-          "@_currencyID": "SAR",
+          "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
           "#text": roundingNumber(
             acceptWarning,
             zeroTaxTotals[key].total_taxable_amount
           ),
         },
         "cbc:TaxAmount": {
-          "@_currencyID": "SAR",
+          "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
           "#text": new Decimal(zeroTaxTotals[key].total_tax_amount).toString(),
         },
+
         "cac:TaxCategory": {
           "cbc:ID": {
             "@_schemeAgencyID": 6,
@@ -300,7 +308,7 @@ const constructTaxTotal = (
         "cbc:ID": {
           "@_schemeAgencyID": 6,
           "@_schemeID": "UN/ECE 5305",
-          "#text": "S",
+          "#text": ZATCA_CONSTANTS.VAT_CATEGORY_STANDARD,
         },
         "cbc:Percent": 15,
         "cac:TaxScheme": {
@@ -310,6 +318,7 @@ const constructTaxTotal = (
             "#text": "VAT",
           },
         },
+
       },
     });
   }
@@ -327,7 +336,7 @@ const constructTaxTotal = (
         "cbc:ID": {
           "@_schemeAgencyID": 6,
           "@_schemeID": "UN/ECE 5305",
-          "#text": "S",
+          "#text": ZATCA_CONSTANTS.VAT_CATEGORY_STANDARD,
         },
         "cbc:Percent": 5,
         "cac:TaxScheme": {
@@ -337,6 +346,7 @@ const constructTaxTotal = (
             "#text": "VAT",
           },
         },
+
       },
     });
   }
@@ -408,15 +418,15 @@ const constructLegalMonetaryTotal = (
   );
   return {
     "cbc:LineExtensionAmount": {
-      "@_currencyID": "SAR",
+      "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
       "#text": new Decimal(total_line_extension_amount).toFixed(2),
     },
     "cbc:TaxExclusiveAmount": {
-      "@_currencyID": "SAR",
+      "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
       "#text": roundingNumber(acceptWarning, taxExclusiveAmount),
     },
     "cbc:TaxInclusiveAmount": {
-      "@_currencyID": "SAR",
+      "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
       "#text": new Decimal(taxInclusiveAmount).toFixed(2),
     },
     // "cbc:AllowanceTotalAmount": {
@@ -424,13 +434,14 @@ const constructLegalMonetaryTotal = (
     //   "#text": new Decimal(total_discounts).toFixed(2),
     // },
     "cbc:PrepaidAmount": {
-      "@_currencyID": "SAR",
+      "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
       "#text": 0,
     },
     "cbc:PayableAmount": {
-      "@_currencyID": "SAR",
+      "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
       "#text": new Decimal(taxInclusiveAmount).toFixed(2),
     },
+
   };
 };
 

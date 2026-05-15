@@ -1,9 +1,9 @@
-import { EGS, EGSUnitInfo } from "../zatca/egs";
+import { EGS, EGSUnitInfo, ZATCAInvoice, ZATCA_CONSTANTS } from "../index";
 import {
   ZATCAInvoiceLineItem,
   ZATCAInvoiceTypes,
 } from "../zatca/templates/simplified_tax_invoice_template";
-import { ZATCAInvoice } from "../zatca/simplified_tax_invoice";
+
 
 
 /**
@@ -93,9 +93,10 @@ const invoice = new ZATCAInvoice({
     invoice_serial_number: "EGS1-886431145-101",
     issue_date: "2024-02-29",
     issue_time: "11:40:40",
-    previous_invoice_hash: "zDnQnE05P6rFMqF1ai21V5hIRlUq/EXvrpsaoPkWRVI=",
+    previous_invoice_hash: ZATCA_CONSTANTS.FIRST_INVOICE_PREVIOUS_HASH,
     line_items: lineItems,
     actual_delivery_date: "2024-02-29",
+
   },
   acceptWarning: true,
 });
@@ -104,7 +105,8 @@ const main = async () => {
   try {
     // TEMP_FOLDER: Use .env or set directly here (Default: /tmp/)
     // Enable for windows
-    // process.env.TEMP_FOLDER = `${require("os").tmpdir()}\\`;
+    process.env.TEMP_FOLDER = require("os").tmpdir() + "\\";
+
 
     // Init a new EGS
     const egs = new EGS(egsunit);
@@ -120,11 +122,13 @@ const main = async () => {
       compliance_request_id
     );
 
-    // Sign invoice
+    // Sign invoice (Optional: pass a custom signing timestamp)
     const { signed_invoice_string, invoice_hash, qr } = egs.signInvoice(
       invoice,
-      true
+      true,
+      "2024-02-29T11:40:40Z"
     );
+
     // Check invoice compliance
     console.log(
       await egs.checkInvoiceCompliance(signed_invoice_string, invoice_hash)
