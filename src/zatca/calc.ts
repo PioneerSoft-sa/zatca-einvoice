@@ -5,6 +5,7 @@ import {
 import { XMLDocument } from "../parser";
 import Decimal from "decimal.js";
 import { ZATCA_CONSTANTS } from "./constants";
+import { ZatcaMath } from "./math";
 
 
 interface CACTaxableAmount {
@@ -13,13 +14,9 @@ interface CACTaxableAmount {
   exist: boolean;
 }
 
-const roundingNumber = (acceptWarning: boolean, number: number): string => {
+const roundingNumber = (_acceptWarning: boolean, number: number): string => {
   try {
-    if (!acceptWarning) {
-      return new Decimal(number).toFixed(2);
-    } else {
-      return new Decimal(number).toString();
-    }
+    return ZatcaMath.monetary(number);
   } catch (e) {
     throw e;
   }
@@ -53,7 +50,7 @@ const constructLineItemTotals = (
       "cbc:AllowanceChargeReason": discount.reason,
       "cbc:Amount": {
         "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
-        "#text": new Decimal(discount.amount).toFixed(14),
+        "#text": ZatcaMath.precise(discount.amount, 14),
       },
       "cbc:BaseAmount": {
         "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
@@ -63,7 +60,7 @@ const constructLineItemTotals = (
     });
   });
 
-  line_discounts = Number(new Decimal(line_discounts).toFixed(14));
+  line_discounts = ZatcaMath.truncateNumber(line_discounts, 14);
   let line_extension_amount = Number(
     roundingNumber(
       acceptWarning,
@@ -77,13 +74,11 @@ const constructLineItemTotals = (
   cacTaxTotal = {
     "cbc:TaxAmount": {
       "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
-      "#text": new Decimal(line_item_total_taxes).toFixed(2),
+      "#text": ZatcaMath.monetary(line_item_total_taxes),
     },
     "cbc:RoundingAmount": {
       "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
-      "#text": new Decimal(
-        line_extension_amount + line_item_total_taxes
-      ).toFixed(2),
+      "#text": ZatcaMath.monetary(line_extension_amount + line_item_total_taxes),
     },
 
   };
@@ -120,7 +115,7 @@ const constructLineItem = (
       },
       "cbc:LineExtensionAmount": {
         "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
-        "#text": new Decimal(line_extension_amount).toFixed(2),
+        "#text": ZatcaMath.monetary(line_extension_amount),
       },
 
       "cac:TaxTotal": cacTaxTotal,
@@ -131,9 +126,10 @@ const constructLineItem = (
       "cac:Price": {
         "cbc:PriceAmount": {
           "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
-          "#text": new Decimal(line_item.tax_exclusive_price)
-            .minus(new Decimal(line_discounts))
-            .toFixed(14),
+          "#text": ZatcaMath.precise(
+            new Decimal(line_item.tax_exclusive_price).minus(new Decimal(line_discounts)),
+            14
+          ),
         },
 
         "cac:AllowanceCharge": cacAllowanceCharges,
@@ -208,7 +204,7 @@ const constructTaxTotal = (
         },
         "cbc:TaxAmount": {
           "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
-          "#text": new Decimal(zeroTaxTotals[key].total_tax_amount).toString(),
+          "#text": ZatcaMath.monetary(zeroTaxTotals[key].total_tax_amount),
         },
 
         "cac:TaxCategory": {
@@ -266,9 +262,7 @@ const constructTaxTotal = (
     let total_line_item_discount =
       line_item.discounts?.reduce((p, c) => p + c.amount, 0) || 0;
 
-    total_line_item_discount = Number(
-      new Decimal(total_line_item_discount).toFixed(14)
-    );
+    total_line_item_discount = ZatcaMath.truncateNumber(total_line_item_discount, 14);
     const taxable_amount = Number(
       roundingNumber(
         acceptWarning,
@@ -330,7 +324,7 @@ const constructTaxTotal = (
       },
       "cbc:TaxAmount": {
         "@_currencyID": "SAR",
-        "#text": new Decimal(fiveTaxSubTotal.tax_amount).toFixed(2),
+        "#text": ZatcaMath.monetary(fiveTaxSubTotal.tax_amount),
       },
       "cac:TaxCategory": {
         "cbc:ID": {
@@ -357,14 +351,14 @@ const constructTaxTotal = (
       {
         "cbc:TaxAmount": {
           "@_currencyID": "SAR",
-          "#text": new Decimal(taxes_total).toFixed(2),
+      "#text": ZatcaMath.monetary(taxes_total),
         },
         "cac:TaxSubtotal": cacTaxSubtotal.concat(zeroTaxSubtotal),
       },
       {
         "cbc:TaxAmount": {
           "@_currencyID": "SAR",
-          "#text": new Decimal(taxes_total).toFixed(2),
+      "#text": ZatcaMath.monetary(taxes_total),
         },
       },
     ],
@@ -419,7 +413,7 @@ const constructLegalMonetaryTotal = (
   return {
     "cbc:LineExtensionAmount": {
       "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
-      "#text": new Decimal(total_line_extension_amount).toFixed(2),
+      "#text": ZatcaMath.monetary(total_line_extension_amount),
     },
     "cbc:TaxExclusiveAmount": {
       "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
@@ -427,7 +421,7 @@ const constructLegalMonetaryTotal = (
     },
     "cbc:TaxInclusiveAmount": {
       "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
-      "#text": new Decimal(taxInclusiveAmount).toFixed(2),
+      "#text": ZatcaMath.monetary(taxInclusiveAmount),
     },
     // "cbc:AllowanceTotalAmount": {
     //   "@_currencyID": "SAR",
@@ -439,7 +433,7 @@ const constructLegalMonetaryTotal = (
     },
     "cbc:PayableAmount": {
       "@_currencyID": ZATCA_CONSTANTS.CURRENCY_CODE,
-      "#text": new Decimal(taxInclusiveAmount).toFixed(2),
+      "#text": ZatcaMath.monetary(taxInclusiveAmount),
     },
 
   };
@@ -458,9 +452,7 @@ export const Calc = (
   let invoice_line_items: any[] = [];
 
   line_items.map((line_item) => {
-    line_item.tax_exclusive_price = Number(
-      new Decimal(line_item.tax_exclusive_price).toFixed(14)
-    );
+    line_item.tax_exclusive_price = ZatcaMath.truncateNumber(line_item.tax_exclusive_price, 14);
     const { line_item_xml, line_item_totals } = constructLineItem(
       line_item,
       acceptWarning

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { cleanUpCertificateString } from "../signing";
+import { certificateToBinarySecurityToken, rawTokenToPem } from "../certificate";
 import { ZATCA_CONSTANTS } from "../constants";
 
 const settings = {
@@ -68,8 +68,7 @@ class API {
   private getAuthHeaders = (certificate?: string, secret?: string): any => {
     if (certificate && secret) {
 
-      const certificate_stripped = cleanUpCertificateString(certificate);
-      const basic = Buffer.from(`${Buffer.from(certificate_stripped).toString("base64")}:${secret}`).toString("base64");
+      const basic = Buffer.from(`${certificateToBinarySecurityToken(certificate)}:${secret}`).toString("base64");
       return {
         "Authorization": `Basic ${basic}`
       };
@@ -99,8 +98,7 @@ class API {
 
       if (response.status != 200) throw new Error("Error issuing a compliance certificate.");
 
-      let issued_certificate = Buffer.from(response.data.binarySecurityToken, "base64").toString();
-      issued_certificate = `-----BEGIN CERTIFICATE-----\n${issued_certificate}\n-----END CERTIFICATE-----`;
+      const issued_certificate = rawTokenToPem(response.data.binarySecurityToken);
       const api_secret = response.data.secret;
 
       return { issued_certificate, api_secret, request_id: response.data.requestID };
@@ -153,8 +151,7 @@ class API {
 
       if (response.status != 200) throw new Error("Error issuing a production certificate.");
 
-      let issued_certificate = Buffer.from(response.data.binarySecurityToken, "base64").toString();
-      issued_certificate = `-----BEGIN CERTIFICATE-----\n${issued_certificate}\n-----END CERTIFICATE-----`;
+      const issued_certificate = rawTokenToPem(response.data.binarySecurityToken);
       const api_secret = response.data.secret;
 
       return { issued_certificate, api_secret, request_id: response.data.requestID };

@@ -8,10 +8,14 @@
 import { spawn } from "child_process";
 import { v4 as uuidv4 } from 'uuid';
 import fs from "fs";
+import os from "os";
+import path from "path";
 
 import defaultCSRConfig from "../templates/csr_template";
 import API from "../api";
 import { ZATCAInvoice } from "../simplified_tax_invoice";
+import { normalizeCertificatePem } from "../certificate";
+import { ZATCACryptoExecutionError } from "../crypto";
 
 export interface EGSUnitLocation {
     city?: string;
@@ -45,6 +49,7 @@ export interface EGSUnitInfo {
     VAT_number: string,
     branch_name: string,
     branch_industry: string,
+    invoice_type?: string,
     location?: EGSUnitLocation,
     customer_info?: EGSUnitCustomerInfo,
     private_key?: string,
@@ -60,17 +65,24 @@ const OpenSSL = (cmd: string[]): Promise<string> => {
         try {
             const command = spawn("openssl", cmd);
             let result = "";
+            let errorOutput = "";
             command.stdout.on("data", (data) => {
                 result += data.toString();
             });
+            command.stderr.on("data", (data) => {
+                errorOutput += data.toString();
+            });
             command.on("close", (code: number) => {
+                if (code !== 0) {
+                    return reject(new ZATCACryptoExecutionError(`OpenSSL failed with exit code ${code}: ${errorOutput}`));
+                }
                 return resolve(result);
             });
             command.on("error", (error: any) => {
-                return reject(error);
+                return reject(new ZATCACryptoExecutionError(`OpenSSL execution failed: ${error.message}`));
             });
         } catch (error: any) {
-            reject(error);
+            reject(new ZATCACryptoExecutionError(`OpenSSL execution failed: ${error.message}`));
         }
     });
 }
@@ -98,8 +110,9 @@ const generateCSR = async (egs_info: EGSUnitInfo, production: boolean, solution_
     // This creates a temporary private file, and csr config file to pass to OpenSSL in order to create and sign the CSR.
     // * In terms of security, this is very bad as /tmp can be accessed by all users. a simple watcher by unauthorized user can retrieve the keys.
     // Better change it to some protected dir.
-    const private_key_file = `${process.env.TEMP_FOLDER ?? "/tmp/"}${uuidv4()}.pem`;
-    const csr_config_file = `${process.env.TEMP_FOLDER ?? "/tmp/"}${uuidv4()}.cnf`;
+    const tempFolder = process.env.TEMP_FOLDER || os.tmpdir();
+    const private_key_file = path.join(tempFolder, `${uuidv4()}.pem`);
+    const csr_config_file = path.join(tempFolder, `${uuidv4()}.cnf`);
     fs.writeFileSync(private_key_file, egs_info.private_key);
     fs.writeFileSync(csr_config_file, defaultCSRConfig({
         egs_model: egs_info.model,
@@ -111,6 +124,7 @@ const generateCSR = async (egs_info: EGSUnitInfo, production: boolean, solution_
         branch_name: egs_info.branch_name,
         taxpayer_name: egs_info.VAT_name,
         taxpayer_provided_id: egs_info.custom_id,
+        invoice_type: egs_info.invoice_type,
         production: production
     }));
 
@@ -141,8 +155,20 @@ export class EGS {
     private api: API;
 
     constructor(egs_info: EGSUnitInfo, env: "production" | "simulation" | "development" = "development") {
-        this.egs_info = egs_info;
+        this.egs_info = this.normalizeCertificates(egs_info);
         this.api = new API(env);
+    }
+
+    private normalizeCertificates(egs_info: EGSUnitInfo): EGSUnitInfo {
+        return {
+            ...egs_info,
+            compliance_certificate: egs_info.compliance_certificate
+                ? normalizeCertificatePem(egs_info.compliance_certificate)
+                : undefined,
+            production_certificate: egs_info.production_certificate
+                ? normalizeCertificatePem(egs_info.production_certificate)
+                : undefined,
+        };
     }
 
 
@@ -158,7 +184,7 @@ export class EGS {
      * @param egs_info Partial<EGSUnitInfo>
      */
     set(egs_info: Partial<EGSUnitInfo>) {
-        this.egs_info = { ...this.egs_info, ...egs_info };
+        this.egs_info = this.normalizeCertificates({ ...this.egs_info, ...egs_info });
     }
 
     /**

@@ -3,6 +3,7 @@ import xmldom from "xmldom";
 import { createHash, createSign, X509Certificate } from "crypto";
 import moment from "moment";
 import {Certificate} from "@fidm/x509";
+import { getCertificateBody, normalizeCertificatePem } from "../certificate";
 
 
 import { XMLDocument } from "../../parser";
@@ -86,7 +87,7 @@ export const createInvoiceDigitalSignature = (invoice_hash: string, private_key_
  */
 export const getCertificateInfo = (certificate_string: string): {hash: string, issuer: string, serial_number: string, public_key: Buffer, signature: Buffer} => {
     const cleanedup_certificate_string: string = cleanUpCertificateString(certificate_string);
-    const wrapped_certificate_string: string = `-----BEGIN CERTIFICATE-----\n${cleanedup_certificate_string}\n-----END CERTIFICATE-----`;
+    const wrapped_certificate_string: string = normalizeCertificatePem(certificate_string);
 
     const hash = getCertificateHash(cleanedup_certificate_string);
     const x509 = new X509Certificate(wrapped_certificate_string);  
@@ -115,7 +116,7 @@ export const getCertificateInfo = (certificate_string: string): {hash: string, i
  * @returns String base64 encoded certificate body.
  */
 export const cleanUpCertificateString = (certificate_string: string): string => {
-    return certificate_string.replace(`-----BEGIN CERTIFICATE-----\n`, "").replace("-----END CERTIFICATE-----", "").trim()
+    return getCertificateBody(certificate_string)
 }
 
 /**
