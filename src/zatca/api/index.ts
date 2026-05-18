@@ -37,6 +37,15 @@ interface ProductionAPIInterface {
    * @returns issued_certificate: string, api_secret: string, or throws on error.
    */
   issueCertificate: (compliance_request_id: string) => Promise<{ issued_certificate: string, api_secret: string, request_id: string }>
+  /**
+   * Starts production certificate renewal by submitting a fresh CSR while
+   * authenticating with the currently active production CSID.
+   * @param csr String CSR in PEM format.
+   * @param otp String renewal OTP from the Fatoora portal.
+   * @param current_ccsid Optional current CSID raw token. Defaults to the authenticated certificate.
+   * @returns issued_certificate: string, api_secret: string, request_id: string
+   */
+  renewCertificate: (csr: string, otp: string, current_ccsid?: string) => Promise<{ issued_certificate: string, api_secret: string, request_id: string }>
 
   /**
   * Report signed ZATCA XML.
@@ -157,6 +166,35 @@ class API {
       return { issued_certificate, api_secret, request_id: response.data.requestID };
     }
 
+    const renewCertificate = async (
+      csr: string,
+      otp: string,
+      current_ccsid?: string
+    ): Promise<{ issued_certificate: string, api_secret: string, request_id: string }> => {
+      if (!certificate || !secret) {
+        throw new Error("Certificate and secret are required to renew a production CSID.");
+      }
+
+      const headers = {
+        "Accept-Version": settings.API_VERSION,
+        "OTP": otp,
+        "CurrentCCSID": current_ccsid || certificateToBinarySecurityToken(certificate),
+      };
+
+      const response = await axios.patch(
+        `${base_url}/production/csids`,
+        { csr: Buffer.from(csr).toString("base64") },
+        { headers: { ...auth_headers, ...headers } }
+      );
+
+      if (response.status != 200) throw new Error("Error renewing a production certificate.");
+
+      const issued_certificate = rawTokenToPem(response.data.binarySecurityToken);
+      const api_secret = response.data.secret;
+
+      return { issued_certificate, api_secret, request_id: response.data.requestID };
+    }
+
     const reportInvoice = async (signed_xml_string: string, invoice_hash: string, egs_uuid: string): Promise<any> => {
       const headers = {
         "Accept-Version": settings.API_VERSION,
@@ -205,6 +243,7 @@ class API {
     };
     return {
       issueCertificate,
+      renewCertificate,
       reportInvoice,
       clearanceInvoice,
     };

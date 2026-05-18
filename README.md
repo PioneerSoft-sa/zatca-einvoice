@@ -1,6 +1,8 @@
 # @pioneersoft/zatca-einvoice
 
-TypeScript helpers for Saudi Arabia ZATCA Phase 2 e-invoicing.
+TypeScript helpers for Saudi Arabia ZATCA Phase 2 e-invoicing. 
+
+**Note:** This library is heavily inspired by and originally forked from [zatca-xml-js](https://github.com/Repzo/zatca-xml-js), enhanced with robust support for Phase 2 Production API integrations, Sandbox certificate renewals, decimal truncation stability, and enterprise reporting flows.
 
 The package handles the ZATCA protocol domain:
 
@@ -178,6 +180,27 @@ const creditNote = new ZATCAInvoice({
     line_items,
   },
 });
+```
+
+## Production CSID Renewal
+
+Renewal starts with the current production CSID, a fresh CSR, and a renewal OTP. The renewal API returns a renewed compliance credential pair, which you use for renewal compliance checks before requesting the final renewed production CSID.
+
+```ts
+const renewalEgs = new EGS(
+  {
+    ...egsInfo,
+    production_certificate: currentProductionCertificate,
+    production_api_secret: currentProductionSecret,
+  },
+  "development"
+);
+
+await renewalEgs.generateNewKeysAndCSR(false, "MyPOS");
+const renewalRequestId = await renewalEgs.renewProductionCertificate("123345");
+
+// Run the required compliance invoice checks with renewalEgs.checkInvoiceCompliance(...)
+await renewalEgs.issueProductionCertificate(renewalRequestId);
 ```
 
 ## Certificate Formats

@@ -239,6 +239,30 @@ export class EGS {
     }
 
     /**
+     * Starts the production certificate renewal flow by submitting a fresh CSR
+     * while authenticating with the current production CSID.
+     * The returned certificate/secret pair becomes the temporary compliance
+     * credentials used for renewal compliance checks and final production issuance.
+     * @param OTP String renewal OTP from Fatoora portal.
+     * @returns Promise String compliance request id on success.
+     */
+    async renewProductionCertificate(OTP: string): Promise<string> {
+        if (!this.egs_info.csr) throw new Error("EGS needs to generate a CSR first.");
+        if (!this.egs_info.production_certificate || !this.egs_info.production_api_secret) {
+            throw new Error("EGS is missing the current production certificate/api secret to renew the production CSID.");
+        }
+
+        const issued_data = await this.api
+            .production(this.egs_info.production_certificate, this.egs_info.production_api_secret)
+            .renewCertificate(this.egs_info.csr, OTP);
+
+        this.egs_info.compliance_certificate = issued_data.issued_certificate;
+        this.egs_info.compliance_api_secret = issued_data.api_secret;
+
+        return issued_data.request_id;
+    }
+
+    /**
      * Checks Invoice compliance with ZATCA API.
      * @param signed_invoice_string String.
      * @param invoice_hash String.
