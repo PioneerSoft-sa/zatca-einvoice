@@ -35,12 +35,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Larklabs-ai/zatca-einvoice.git"
+    "url": "git+https://github.com/PioneerSoft-sa/zatca-einvoice.git"
   },
   "bugs": {
-    "url": "https://github.com/Larklabs-ai/zatca-einvoice/issues"
+    "url": "https://github.com/PioneerSoft-sa/zatca-einvoice/issues"
   },
-  "homepage": "https://github.com/Larklabs-ai/zatca-einvoice#readme",
+  "homepage": "https://github.com/PioneerSoft-sa/zatca-einvoice#readme",
   "typings": "dist/index.d.ts",
   "keywords": [
     "zatca",

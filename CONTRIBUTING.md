@@ -18,7 +18,7 @@ documentation, examples, tests, and issue triage.
 ## Development setup
 
 ```bash
-git clone https://github.com/Larklabs-ai/zatca-einvoice.git
+git clone https://github.com/PioneerSoft-sa/zatca-einvoice.git
 cd zatca-einvoice
 npm install
 npm run build
