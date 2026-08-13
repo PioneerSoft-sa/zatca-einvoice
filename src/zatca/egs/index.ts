@@ -50,6 +50,7 @@ export interface EGSUnitInfo {
     branch_name: string,
     branch_industry: string,
     invoice_type?: string,
+    email_address?: string,
     location?: EGSUnitLocation,
     customer_info?: EGSUnitCustomerInfo,
     private_key?: string,
@@ -114,17 +115,26 @@ const generateCSR = async (egs_info: EGSUnitInfo, production: boolean, solution_
     const private_key_file = path.join(tempFolder, `${uuidv4()}.pem`);
     const csr_config_file = path.join(tempFolder, `${uuidv4()}.cnf`);
     fs.writeFileSync(private_key_file, egs_info.private_key);
+    const branchLocation = [
+        egs_info.location?.building,
+        egs_info.location?.street,
+        egs_info.location?.city,
+        egs_info.location?.city_subdivision,
+        egs_info.location?.postal_zone,
+    ].filter(Boolean).join(", ");
+
     fs.writeFileSync(csr_config_file, defaultCSRConfig({
         egs_model: egs_info.model,
         egs_serial_number: egs_info.uuid,
         solution_name: solution_name,
         vat_number: egs_info.VAT_number,
-        branch_location: `${egs_info.location?.building} ${egs_info.location?.street}, ${egs_info.location?.city}`,
+        branch_location: branchLocation,
         branch_industry: egs_info.branch_industry,
         branch_name: egs_info.branch_name,
         taxpayer_name: egs_info.VAT_name,
         taxpayer_provided_id: egs_info.custom_id,
         invoice_type: egs_info.invoice_type,
+        email_address: egs_info.email_address,
         production: production
     }));
 

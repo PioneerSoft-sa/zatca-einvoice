@@ -8,6 +8,7 @@ const settings = {
   SIMULATION_BASEURL: ZATCA_CONSTANTS.API.SIMULATION_BASE_URL,
   PRODUCTION_BASEURL: ZATCA_CONSTANTS.API.PRODUCTION_BASE_URL,
 };
+const HTTP_TIMEOUT_MS = 30_000;
 
 
 interface ComplianceAPIInterface {
@@ -102,7 +103,7 @@ class API {
 
       const response = await axios.post(`${base_url}/compliance`,
         { csr: Buffer.from(csr).toString("base64") },
-        { headers: { ...auth_headers, ...headers } }
+        { headers: { ...auth_headers, ...headers }, timeout: HTTP_TIMEOUT_MS }
       );
 
       if (response.status != 200) throw new Error("Error issuing a compliance certificate.");
@@ -125,7 +126,7 @@ class API {
           uuid: egs_uuid,
           invoice: Buffer.from(signed_xml_string).toString("base64")
         },
-        { headers: { ...auth_headers, ...headers } }
+        { headers: { ...auth_headers, ...headers }, timeout: HTTP_TIMEOUT_MS }
       );
 
       if (response.status != 200 && response.status != 202) throw new Error("Error in compliance check.");
@@ -155,7 +156,7 @@ class API {
 
       const response = await axios.post(`${base_url}/production/csids`,
         { compliance_request_id: compliance_request_id },
-        { headers: { ...auth_headers, ...headers } }
+        { headers: { ...auth_headers, ...headers }, timeout: HTTP_TIMEOUT_MS }
       );
 
       if (response.status != 200) throw new Error("Error issuing a production certificate.");
@@ -184,7 +185,7 @@ class API {
       const response = await axios.patch(
         `${base_url}/production/csids`,
         { csr: Buffer.from(csr).toString("base64") },
-        { headers: { ...auth_headers, ...headers } }
+        { headers: { ...auth_headers, ...headers }, timeout: HTTP_TIMEOUT_MS }
       );
 
       if (response.status != 200) throw new Error("Error renewing a production certificate.");
@@ -196,25 +197,33 @@ class API {
     }
 
     const reportInvoice = async (signed_xml_string: string, invoice_hash: string, egs_uuid: string): Promise<any> => {
-      const headers = {
-        "Accept-Version": settings.API_VERSION,
-        "Accept-Language": "en",
-        "Clearance-Status": "0"
-      };
+      try {
+        const headers = {
+          "Accept-Version": settings.API_VERSION,
+          "Accept-Language": "en",
+          "Clearance-Status": "0"
+        };
 
-      const response = await axios.post(
-        `${base_url}/invoices/reporting/single`,
-        {
-          invoiceHash: invoice_hash,
-          uuid: egs_uuid,
-          invoice: Buffer.from(signed_xml_string).toString("base64"),
-        },
-        { headers: { ...auth_headers, ...headers } }
-      );
+        const response = await axios.post(
+          `${base_url}/invoices/reporting/single`,
+          {
+            invoiceHash: invoice_hash,
+            uuid: egs_uuid,
+            invoice: Buffer.from(signed_xml_string).toString("base64"),
+          },
+          { headers: { ...auth_headers, ...headers }, timeout: HTTP_TIMEOUT_MS }
+        );
 
-      if (response.status != 200 && response.status !== 202)
-        throw new Error("Error in reporting invoice.");
-      return response.data;
+        if (response.status != 200 && response.status !== 202)
+          throw new Error("Error in reporting invoice.");
+        return response.data;
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 400) {
+          const responseData = error.response.data;
+          if (responseData?.reportingStatus) return responseData;
+        }
+        throw error;
+      }
     };
 
     const clearanceInvoice = async (
@@ -222,24 +231,32 @@ class API {
       invoice_hash: string,
       egs_uuid: string
     ): Promise<any> => {
-      const headers = {
-        "Accept-Version": settings.API_VERSION,
-        "Accept-Language": "en",
-        "Clearance-Status": "1",
-      };
+      try {
+        const headers = {
+          "Accept-Version": settings.API_VERSION,
+          "Accept-Language": "en",
+          "Clearance-Status": "1",
+        };
 
-      const response = await axios.post(`${base_url}/invoices/clearance/single`,
-        {
-          invoiceHash: invoice_hash,
-          uuid: egs_uuid,
-          invoice: Buffer.from(signed_xml_string).toString("base64"),
-        },
-        { headers: { ...auth_headers, ...headers } }
-      );
+        const response = await axios.post(`${base_url}/invoices/clearance/single`,
+          {
+            invoiceHash: invoice_hash,
+            uuid: egs_uuid,
+            invoice: Buffer.from(signed_xml_string).toString("base64"),
+          },
+          { headers: { ...auth_headers, ...headers }, timeout: HTTP_TIMEOUT_MS }
+        );
 
-      if (response.status != 200 && response.status !== 202)
-        throw new Error("Error in clearance invoice.");
-      return response.data;
+        if (response.status != 200 && response.status !== 202)
+          throw new Error("Error in clearance invoice.");
+        return response.data;
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 400) {
+          const responseData = error.response.data;
+          if (responseData?.reportingStatus) return responseData;
+        }
+        throw error;
+      }
     };
     return {
       issueCertificate,
