@@ -1,6 +1,6 @@
 {
   "name": "@pioneersoft/zatca-einvoice",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "An implementation of Saudi Arabia ZATCA's E-Invoicing requirements, processes, and standards.",
   "main": "dist/index.js",
   "files": [
@@ -10,6 +10,7 @@
     "build": "tsc --project tsconfig.build.json",
     "example": "tsc --project tsconfig.build.json && node dist/examples/full.js",
     "prepare": "npm run build",
+    "test": "tsc -p tsconfig.json && node --test dist/tests/calc-totals.test.js",
     "lint": "npx prettier@2.8.8 --write ."
   },
   "devDependencies": {
