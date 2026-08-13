@@ -35,13 +35,21 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Repzo/zatca-xml-js"
+    "url": "https://github.com/Larklabs-ai/zatca-einvoice.git"
   },
+  "bugs": {
+    "url": "https://github.com/Larklabs-ai/zatca-einvoice/issues"
+  },
+  "homepage": "https://github.com/Larklabs-ai/zatca-einvoice#readme",
   "typings": "dist/index.d.ts",
   "keywords": [
     "zatca",
+    "e-invoicing",
     "xml",
+    "ubl",
     "signing",
+    "xades",
+    "fatoora",
     "on-boarding",
     "EGS",
     "invoice",

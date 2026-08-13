@@ -1,6 +1,10 @@
 # @pioneersoft/zatca-einvoice
 
-TypeScript helpers for Saudi Arabia ZATCA Phase 2 e-invoicing. 
+[![npm version](https://img.shields.io/npm/v/%40pioneersoft%2Fzatca-einvoice)](https://www.npmjs.com/package/@pioneersoft/zatca-einvoice)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Node.js](https://img.shields.io/node/v/%40pioneersoft%2Fzatca-einvoice)](https://www.npmjs.com/package/@pioneersoft/zatca-einvoice)
+
+TypeScript helpers for Saudi Arabia ZATCA Phase 2 e-invoicing.
 
 **Note:** This library is heavily inspired by and originally forked from [zatca-xml-js](https://github.com/Repzo/zatca-xml-js), enhanced with robust support for Phase 2 Production API integrations, Sandbox certificate renewals, decimal truncation stability, and enterprise reporting flows.
 
@@ -105,7 +109,11 @@ async function onboardAndReport() {
     },
   });
 
-  const complianceSigned = egs.signInvoice(invoice, false, "2026-05-18T10:00:00Z");
+  const complianceSigned = egs.signInvoice(
+    invoice,
+    false,
+    "2026-05-18T10:00:00Z"
+  );
   await egs.checkInvoiceCompliance(
     complianceSigned.signed_invoice_string,
     complianceSigned.invoice_hash
@@ -126,7 +134,11 @@ async function onboardAndReport() {
     "development"
   );
 
-  const signed = productionEgs.signInvoice(invoice, true, "2026-05-18T10:00:00Z");
+  const signed = productionEgs.signInvoice(
+    invoice,
+    true,
+    "2026-05-18T10:00:00Z"
+  );
   const reportResponse = await productionEgs.reportInvoice(
     signed.signed_invoice_string,
     signed.invoice_hash
@@ -273,6 +285,18 @@ Keep these outside the library:
 - Persist full signed XML, invoice hash, QR, ZATCA response, and status.
 - Monitor certificates before expiry.
 - Treat validation `ERROR` as rejected. Validation `WARNING` may still be accepted by ZATCA but should be reviewed.
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, branch naming, pull request expectations, and security-aware contribution guidelines.
+
+## Security
+
+If you believe you found a vulnerability in the library's cryptographic, XML, certificate, or API handling, follow the private reporting instructions in [SECURITY.md](SECURITY.md). Do not post private keys, CSIDs, secrets, OTPs, or real production invoice data in public issues.
+
+## Code of Conduct
+
+This project follows the community expectations documented in [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ## Disclaimer
 
