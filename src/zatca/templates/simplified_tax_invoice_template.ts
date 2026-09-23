@@ -1,6 +1,5 @@
 import { render } from "mustache";
 import { EGSUnitInfo } from "../egs";
-import defaultBillingReference from "./invoice_billing_reference_template";
 
 /**
  * Maybe use a templating engine instead of str replace.
@@ -215,6 +214,8 @@ interface ZatcaInvoice{
   issue_time: string;
   previous_invoice_hash: string;
   line_items: ZATCAInvoiceLineItem[];
+  /** Cash/POS payable (BT-115). When set, BT-114 absorbs BT-112 vs cash. */
+  expected_payable?: number;
 }
 
 type CreditDebitInvoice = ZatcaInvoice & {

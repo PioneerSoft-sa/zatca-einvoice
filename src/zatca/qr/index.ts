@@ -5,6 +5,15 @@ import { XMLDocument } from "../../parser";
 import { getInvoiceHash } from "../signing";
 
 
+/** Fatoora: QR Tag 4 is BT-112 TaxInclusiveAmount, never BT-115 PayableAmount. */
+const qrInvoiceTotal = (invoice_xml: XMLDocument): string => {
+    const legal = invoice_xml.get("Invoice/cac:LegalMonetaryTotal")?.[0];
+    if (!legal) {
+        return "";
+    }
+    return legal["cbc:TaxInclusiveAmount"]["#text"].toString();
+};
+
 interface QRParams {
     invoice_xml: XMLDocument,
     digital_signature: string,
@@ -29,7 +38,7 @@ export const generateQR = ({invoice_xml, digital_signature, public_key, certific
     // Extract required tags
     const seller_name = invoice_xml.get("Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName")?.[0];
     const VAT_number = invoice_xml.get("Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID")?.[0].toString();
-    const invoice_total = invoice_xml.get("Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount")?.[0]["#text"].toString();
+    const invoice_total = qrInvoiceTotal(invoice_xml);
     const VAT_total = invoice_xml.get("Invoice/cac:TaxTotal")?.[0]["cbc:TaxAmount"]["#text"].toString();
     
     const issue_date = invoice_xml.get("Invoice/cbc:IssueDate")?.[0];
@@ -68,7 +77,7 @@ export const generateQR = ({invoice_xml, digital_signature, public_key, certific
     // Extract required tags
     const seller_name = invoice_xml.get("Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName")?.[0];
     const VAT_number = invoice_xml.get("Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID")?.[0].toString();
-    const invoice_total = invoice_xml.get("Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount")?.[0]["#text"].toString();
+    const invoice_total = qrInvoiceTotal(invoice_xml);
     const VAT_total = invoice_xml.get("Invoice/cac:TaxTotal")?.[0]["cbc:TaxAmount"]["#text"].toString();
     
     const issue_date = invoice_xml.get("Invoice/cbc:IssueDate")?.[0];

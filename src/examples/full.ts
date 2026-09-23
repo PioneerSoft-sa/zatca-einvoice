@@ -12,7 +12,6 @@ import {
   isPemCertificate,
   generatePhaseOneQR
 } from "../index";
-import fs from "fs";
 import path from "path";
 import os from "os";
 
@@ -137,7 +136,7 @@ const main = async () => {
     const vatPercent = 15;
     
     // Math Utilities (Ensuring strict compliance with ZATCA rounding rules)
-    console.log(`[Math] Truncated (1000.556): ${ZatcaMath.truncate(netAmount, 2)}`);
+    console.log(`[Math] Half-up monetary (1000.556): ${ZatcaMath.monetary(netAmount)}`);
     console.log(`[Math] Calculate VAT (15% of 1000.556): ${ZatcaMath.calculateVATAmount(netAmount, vatPercent)}`);
     console.log(`[Math] Line Total with VAT: ${ZatcaMath.calculateLineTotalWithVAT(netAmount, ZatcaMath.calculateVATAmount(netAmount, vatPercent))}\\n`);
 
@@ -213,7 +212,6 @@ const main = async () => {
         actual_delivery_date: issueDate,
         payment_method: ZATCAPaymentMethods.BANK_ACCOUNT,
       },
-      acceptWarning: true,
     });
     console.log(`[Invoice] Standard Tax Invoice Built Successfully.`);
 
@@ -230,7 +228,6 @@ const main = async () => {
         previous_invoice_hash: "NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==", // Assume PIH from first invoice
         line_items: sampleLineItems,
       },
-      acceptWarning: true, // Auto-correct minor rounding issues
     });
     console.log(`[Invoice] Simplified Tax Invoice Built Successfully.\\n`);
 

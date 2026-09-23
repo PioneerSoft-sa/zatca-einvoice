@@ -13,7 +13,7 @@ The package handles the ZATCA protocol domain:
 - Generate secp256k1 EGS keys and CSR files
 - Request compliance CSID and production CSID
 - Build simplified and standard UBL invoice XML
-- Apply ZATCA decimal truncation helpers
+- Apply ZATCA half-up decimal helpers
 - Sign invoices with XAdES/ECDSA cryptographic stamp
 - Generate ZATCA QR payloads
 - Check compliance invoices
@@ -231,13 +231,13 @@ const token = certificateToBinarySecurityToken(pem);
 
 ## Decimal Handling
 
-ZATCA decimal rules are validation-critical. The library enforces monetary truncation during invoice XML generation and also exposes helpers.
+ZATCA §10 requires **half-up** rounding to two decimals on monetary totals (not truncation). Document VAT (`BT-117` / `BT-110`) is `round(taxable × rate, 2)` per category, not the sum of rounded line VAT. Pass `expected_payable` (cash/POS grand total) to set `BT-114` so `BT-115` matches what the customer paid.
 
 ```ts
 import { ZatcaMath } from "@pioneersoft/zatca-einvoice";
 
-ZatcaMath.monetary(10.126); // "10.12"
-ZatcaMath.calculateVATAmount(10.126, 15); // 1.51
+ZatcaMath.monetary(10.126); // "10.13"
+ZatcaMath.calculateVATAmount(10.126, 15); // 1.52
 ```
 
 ## CSR And Crypto Helpers
