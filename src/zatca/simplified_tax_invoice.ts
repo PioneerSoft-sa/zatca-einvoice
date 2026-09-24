@@ -25,11 +25,9 @@ export class ZATCAInvoice {
   constructor({
     invoice_xml_str,
     props,
-    acceptWarning,
   }: {
     invoice_xml_str?: string;
     props?: ZATCAInvoiceProps;
-    acceptWarning?: boolean;
   }) {
     if (invoice_xml_str) {
       this.invoice_xml = new XMLDocument(invoice_xml_str);
@@ -40,16 +38,15 @@ export class ZATCAInvoice {
       this.invoice_xml = new XMLDocument(defaultSimplifiedTaxInvoice(props));
 
       // Parsing
-      this.parseLineItems(props.line_items ?? [], props, acceptWarning);
+      this.parseLineItems(props.line_items ?? [], props);
     }
   }
 
   private parseLineItems(
     line_items: ZATCAInvoiceLineItem[],
-    props: ZATCAInvoiceProps,
-    acceptWarning: boolean = false
+    props: ZATCAInvoiceProps
   ) {
-    Calc(line_items, props, this.invoice_xml, acceptWarning);
+    Calc(line_items, props, this.invoice_xml);
   }
 
   getXML(): XMLDocument {
